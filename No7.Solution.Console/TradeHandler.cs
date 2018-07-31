@@ -1,99 +1,108 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
+using System.Globalization;
 using System.IO;
 
-namespace No7.Solution.Console
-{
-    public class TradeHandler
-    {
-        private static float LotSize = 100000f;
+//Разделил на 3 класса.
+//FileReader - получение данных из файла
+//DataProcessing - обработка инфрмации(логика)
+//Repository - работа с бд
+//TradeRecord своеобразный DTO
 
-        public void HandleTrades(Stream stream)
-        {
 
-            var lines = new List<string>();
-            using (var reader = new StreamReader(stream))
-            {
-                string line;
-                while((line = reader.ReadLine()) != null)
-                {
-                    lines.Add(line);
-                }
-            }
+//namespace No7.Solution.Console
+//{
+//    public class TradeHandler
+//    {
+//        private static float LotSize = 100000f;
 
-            var trades = new List<TradeRecord>();
+//        public void HandleTrades(Stream stream)
+//        {
 
-            var lineCount = 1;
-            foreach (var line in lines)
-            {
-                var fields = line.Split(new char[] { ',' });
+//            var lines = new List<string>();
+//            using (var reader = new StreamReader(stream))
+//            {
+//                string line;
+//                while((line = reader.ReadLine()) != null)
+//                {
+//                    lines.Add(line);
+//                }
+//            }
 
-                if(fields.Length != 3)
-                {
-                    System.Console.WriteLine("WARN: Line {0} malformed. Only {1} field(s) found.", lineCount, fields.Length);
-                    continue;
-                }
+//            var trades = new List<TradeRecord>();
 
-                if(fields[0].Length != 6)
-                {
-                    System.Console.WriteLine("WARN: Trade currencies on line {0} malformed: '{1}'", lineCount, fields[0]);
-                    continue;
-                }
+//            var lineCount = 1;
+//            foreach (var line in lines)
+//            {
+//                var fields = line.Split(new char[] { ',' });
 
-                if(!int.TryParse(fields[1], out var tradeAmount))
-                {
-                    System.Console.WriteLine("WARN: Trade amount on line {0} not a valid integer: '{1}'", lineCount, fields[1]);
-                }
+//                if(fields.Length != 3)
+//                {
+//                    System.Console.WriteLine("WARN: Line {0} malformed. Only {1} field(s) found.", lineCount, fields.Length);
+//                    continue;
+//                }
 
-                if(!decimal.TryParse(fields[2], out var tradePrice))
-                {
-                    System.Console.WriteLine("WARN: Trade price on line {0} not a valid decimal: '{1}'", lineCount, fields[2]);
-                }
+//                if(fields[0].Length != 6)
+//                {
+//                    System.Console.WriteLine("WARN: Trade currencies on line {0} malformed: '{1}'", lineCount, fields[0]);
+//                    continue;
+//                }
 
-                var sourceCurrencyCode = fields[0].Substring(0, 3);
-                var destinationCurrencyCode = fields[0].Substring(3, 3);
+//                if(!int.TryParse(fields[1], out var tradeAmount))
+//                {
+//                    System.Console.WriteLine("WARN: Trade amount on line {0} not a valid integer: '{1}'", lineCount, fields[1]);
+//                }
 
-                var trade = new TradeRecord
-                {
-                    SourceCurrency = sourceCurrencyCode,
-                    DestinationCurrency = destinationCurrencyCode,
-                    Lots = tradeAmount / LotSize,
-                    Price = tradePrice
-                };
+//                if(!decimal.TryParse(fields[2],out var tradePrice))
+//                {
+//                    System.Console.WriteLine("WARN: Trade price on line {0} not a valid decimal: '{1}'", lineCount, fields[2]);
+//                }
 
-                trades.Add(trade);
+//                var sourceCurrencyCode = fields[0].Substring(0, 3);
+//                var destinationCurrencyCode = fields[0].Substring(3, 3);
 
-                lineCount++;
-            }
+//                var trade = new TradeRecord
+//                {
+//                    SourceCurrency = sourceCurrencyCode,
+//                    DestinationCurrency = destinationCurrencyCode,
+//                    Lots = tradeAmount / LotSize,
+//                    Price = tradePrice
+//                };
 
-            // save into database
-            string connectionString = ConfigurationManager.ConnectionStrings["TradeData"].ConnectionString;
-            using (var connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-                using(var transaction = connection.BeginTransaction())
-                {
-                    foreach(var trade in trades)
-                    {
-                        var command = connection.CreateCommand();
-                        command.Transaction = transaction;
-                        command.CommandType = System.Data.CommandType.StoredProcedure;
-                        command.CommandText = "dbo.Insert_Trade";
-                        command.Parameters.AddWithValue("@sourceCurrency", trade.SourceCurrency);
-                        command.Parameters.AddWithValue("@destinationCurrency", trade.DestinationCurrency);
-                        command.Parameters.AddWithValue("@lots", trade.Lots);
-                        command.Parameters.AddWithValue("@price", trade.Price);
+//                trades.Add(trade);
 
-                        command.ExecuteNonQuery();
-                    }
+//                lineCount++;
+//            }
 
-                    transaction.Commit();
-                }
-                connection.Close();
-            }
+//            // save into database
+//            string connectionString = ConfigurationManager.ConnectionStrings["TradeData"].ConnectionString;
+//            using (var connection = new SqlConnection(connectionString))
+//            {
+//                connection.Open();
+//                using(var transaction = connection.BeginTransaction())
+//                {
+//                    foreach(var trade in trades)
+//                    {
+//                        var command = connection.CreateCommand();
+//                        command.Transaction = transaction;
+//                        command.CommandType = System.Data.CommandType.StoredProcedure;
+//                        command.CommandText = "dbo.Insert_Trade";
+//                        command.Parameters.AddWithValue("@sourceCurrency", trade.SourceCurrency);
+//                        command.Parameters.AddWithValue("@destinationCurrency", trade.DestinationCurrency);
+//                        command.Parameters.AddWithValue("@lots", trade.Lots);
+//                        command.Parameters.AddWithValue("@price", trade.Price);
 
-            System.Console.WriteLine("INFO: {0} trades processed", trades.Count);
-        }
-    }
-}
+//                        command.ExecuteNonQuery();
+//                    }
+
+//                    transaction.Commit();
+//                }
+//                connection.Close();
+//            }
+
+//            System.Console.WriteLine("INFO: {0} trades processed", trades.Count);
+//        }
+//    }
+//}

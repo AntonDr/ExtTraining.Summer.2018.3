@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System.Configuration;
+using System.Reflection;
+using No7.Solution;
 
 namespace No7.Solution.Console
 {
@@ -6,11 +8,17 @@ namespace No7.Solution.Console
     {
         static void Main(string[] args)
         {
-            var tradeStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("No7.Solution.Console.trades.txt");
+            
+      
+            string file = ConfigurationManager.AppSettings.Get("file");
 
-            var tradeProcessor = new TradeHandler();
+            var tradeStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(file);
 
-            tradeProcessor.HandleTrades(tradeStream);
+            //var tradeProcessor = new TradeHandler();
+
+            TradeService.Start(tradeStream);
+
+            //tradeProcessor.HandleTrades(tradeStream);
         }
     }
 }
